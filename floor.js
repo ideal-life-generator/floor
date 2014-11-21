@@ -39,16 +39,8 @@
       this.lastPosition = {};
     }
 
-    Animation.prototype.formula = function(lastPosition, value) {
-      var position, speed;
-      if (value > lastPosition && (Math.ceil(lastPosition) !== value) || value < lastPosition && (Math.floor(lastPosition) !== value)) {
-        speed = value - lastPosition;
-        return position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
-      }
-    };
-
     Animation.prototype.live = function() {
-      var component, components, lastPosition, n, position, prop, propName, proppers, result, value, _i, _j, _len, _len1, _ref, _ref1;
+      var component, components, lastPosition, n, position, prop, propName, proppers, result, speed, testPosition, testValue, tryAgain, value, _i, _j, _len, _len1, _ref, _ref1;
       _ref = this.value;
       for (prop in _ref) {
         value = _ref[prop];
@@ -61,26 +53,37 @@
               propName = component;
             }
             if (n % 2) {
-              proppers = this.lastPosition[prop];
               lastPosition = this.lastPosition[prop][propName];
               value = ~~component;
-              position = this.formula(proppers[propName], value);
+              if (value > lastPosition && (Math.ceil(lastPosition) !== value) || value < lastPosition && (Math.floor(lastPosition) !== value)) {
+                tryAgain = true;
+                speed = value - lastPosition;
+                position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
+                this.lastPosition[prop][propName] = position;
+              } else {
+                position = false;
+              }
               if (position) {
-                proppers[propName] = position;
                 result += propName + position;
               } else {
-                result += propName + proppers[propName];
+                result += propName + lastPosition;
               }
             }
           }
           this.element.style[prop] = result + propName;
         } else {
           lastPosition = this.lastPosition[prop];
-          position = this.formula(lastPosition, value);
-          this.lastPosition[prop] = this.element.style[prop] = position;
+          testPosition = lastPosition * 10000;
+          testValue = value * 10000;
+          if (testValue > testPosition && (Math.ceil(testPosition) !== testValue) || testValue < testPosition && (Math.floor(testPosition) !== testValue)) {
+            tryAgain = true;
+            speed = value - lastPosition;
+            position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
+            this.lastPosition[prop] = this.element.style[prop] = position;
+          }
         }
       }
-      if (position) {
+      if (tryAgain) {
         return setTimeout(((function(_this) {
           return function() {
             return _this.live();
@@ -106,7 +109,7 @@
             proppers = value;
           }
         }
-        return this._status = 0;
+        return this._status = tryAgain = 0;
       }
     };
 

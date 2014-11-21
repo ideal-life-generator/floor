@@ -27,11 +27,6 @@ class Animation
     @value = { }
     @lastPosition = { }
 
-  formula: (lastPosition, value) ->
-    if value > lastPosition and (Math.ceil(lastPosition) isnt value) or value < lastPosition and (Math.floor(lastPosition) isnt value)
-      speed = value - lastPosition
-      position = lastPosition + speed * Math.ceil(Math.abs(speed) / @resist * 100) / 100
-
   live: ->
     for prop, value of @value
       if typeof value is "string"
@@ -41,21 +36,30 @@ class Animation
           unless n % 2
             propName = component
           if n % 2
-            proppers = @lastPosition[prop]
             lastPosition = @lastPosition[prop][propName]
             value = ~~component
-            position = @formula proppers[propName], value
+            if value > lastPosition and (Math.ceil(lastPosition) isnt value) or value < lastPosition and (Math.floor(lastPosition) isnt value)
+              tryAgain = on
+              speed = value - lastPosition
+              position = lastPosition + speed * Math.ceil(Math.abs(speed) / @resist * 100) / 100
+              @lastPosition[prop][propName] = position
+            else
+              position = off
             if position
-              proppers[propName] = position
               result += propName + position
             else
-              result += propName + proppers[propName]
+              result += propName + lastPosition
         @element.style[prop] = result + propName
       else
         lastPosition = @lastPosition[prop]
-        position = @formula lastPosition, value
-        @lastPosition[prop] = @element.style[prop] = position
-    if position then setTimeout (=> @live()), @fps
+        testPosition = lastPosition * 10000
+        testValue = value * 10000
+        if testValue > testPosition and (Math.ceil(testPosition) isnt testValue) or testValue < testPosition and (Math.floor(testPosition) isnt testValue)
+          tryAgain = on
+          speed = value - lastPosition
+          position = lastPosition + speed * Math.ceil(Math.abs(speed) / @resist * 100) / 100
+          @lastPosition[prop] = @element.style[prop] = position
+    if tryAgain then setTimeout (=> @live()), @fps
     else
       for prop, value of @value
         proppers = @lastPosition[prop]
@@ -68,7 +72,7 @@ class Animation
               proppers[propName] = ~~component
         else
           proppers = value
-      @_status = 0
+      @_status = tryAgain = 0
 
   start: (startData, fps, @resist) ->
     @fps = 1000 / fps
