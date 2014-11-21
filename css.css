@@ -1,0 +1,54 @@
+* {
+  margin: 0; }
+
+html {
+  height: 100%; }
+
+body {
+  background-color: lightgray;
+  font-family: Tahoma;
+  -webkit-user-select: none;
+  height: inherit;
+  perspective: 1000px;
+  overflow: hidden; }
+
+.cube {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  margin-top: -150px;
+  margin-left: -150px;
+  transform-style: preserve-3d; }
+
+.side {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background-color: maroon;
+  border: 3px solid lightyellow;
+  cursor: pointer; }
+  .side h1 {
+    line-height: 300px;
+    text-align: center;
+    font-size: 150px;
+    color: white; }
+
+#A {
+  transform: rotateY(0deg) translateZ(200px); }
+
+#B {
+  transform: rotateX(180deg) translateZ(200px); }
+
+#C {
+  transform: rotateY(90deg) translateZ(200px); }
+
+#D {
+  transform: rotateY(-90deg) translateZ(200px); }
+
+#E {
+  transform: rotateX(90deg) translateZ(200px); }
+
+#F {
+  transform: rotateX(-90deg) translateZ(200px); }
