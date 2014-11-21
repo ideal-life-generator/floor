@@ -11,7 +11,7 @@
     animation = new Animation(element);
     animation.start({
       "webkitTransform": "rotateX(~0~deg) rotateY(~0~deg)",
-      opacity: 1
+      opacity: 0.5
     }, 60, 3000);
     return window.addEventListener("mousemove", function(event) {
       var x, y;
@@ -34,13 +34,21 @@
 
   Animation = (function() {
     function Animation(element) {
-      this.element = element;
+      this.style = element.style;
       this.value = {};
       this.lastPosition = {};
     }
 
+    Animation.prototype.formula = function(lastPosition, value) {
+      var position, speed;
+      if (value > lastPosition && (Math.ceil(lastPosition) !== value) || value < lastPosition && (Math.floor(lastPosition) !== value)) {
+        speed = value - lastPosition;
+        return position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
+      }
+    };
+
     Animation.prototype.live = function() {
-      var component, components, lastPosition, n, position, prop, propName, proppers, result, speed, testPosition, testValue, tryAgain, value, _i, _j, _len, _len1, _ref, _ref1;
+      var component, components, lastPosition, n, position, prop, propName, proppers, result, value, _i, _j, _len, _len1, _ref, _ref1;
       _ref = this.value;
       for (prop in _ref) {
         value = _ref[prop];
@@ -53,42 +61,31 @@
               propName = component;
             }
             if (n % 2) {
+              proppers = this.lastPosition[prop];
               lastPosition = this.lastPosition[prop][propName];
               value = ~~component;
-              if (value > lastPosition && (Math.ceil(lastPosition) !== value) || value < lastPosition && (Math.floor(lastPosition) !== value)) {
-                tryAgain = true;
-                speed = value - lastPosition;
-                position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
-                this.lastPosition[prop][propName] = position;
-              } else {
-                position = false;
-              }
+              position = this.formula(proppers[propName], value);
               if (position) {
+                proppers[propName] = position;
                 result += propName + position;
               } else {
-                result += propName + lastPosition;
+                result += propName + proppers[propName];
               }
             }
           }
-          this.element.style[prop] = result + propName;
+          this.style[prop] = result + propName;
         } else {
           lastPosition = this.lastPosition[prop];
-          testPosition = lastPosition * 10000;
-          testValue = value * 10000;
-          if (testValue > testPosition && (Math.ceil(testPosition) !== testValue) || testValue < testPosition && (Math.floor(testPosition) !== testValue)) {
-            tryAgain = true;
-            speed = value - lastPosition;
-            position = lastPosition + speed * Math.ceil(Math.abs(speed) / this.resist * 100) / 100;
-            this.lastPosition[prop] = this.element.style[prop] = position;
-          }
+          position = this.formula(lastPosition, value);
+          this.lastPosition[prop] = this.style[prop] = position;
         }
       }
-      if (tryAgain) {
+      if (position) {
         return setTimeout(((function(_this) {
           return function() {
             return _this.live();
           };
-        })(this)), this.fps);
+        })(this)), this.delay);
       } else {
         _ref1 = this.value;
         for (prop in _ref1) {
@@ -109,39 +106,35 @@
             proppers = value;
           }
         }
-        return this._status = tryAgain = 0;
+        return this._status = 0;
       }
     };
 
     Animation.prototype.start = function(startData, fps, resist) {
-      var component, components, n, prop, propName, proppers, value, _results;
+      var component, components, n, prop, propName, proppers, result, value, _i, _len, _results;
       this.resist = resist;
-      this.fps = 1000 / fps;
+      this.delay = 1000 / fps;
       _results = [];
       for (prop in startData) {
         value = startData[prop];
-        this.element.style[prop] = value;
+        this.style[prop] = value;
         if (typeof value === "string") {
           components = value.split("~");
+          result = "";
           proppers = this.lastPosition[prop] = {};
-          _results.push((function() {
-            var _i, _len, _results1;
-            _results1 = [];
-            for (n = _i = 0, _len = components.length; _i < _len; n = ++_i) {
-              component = components[n];
-              if (!(n % 2)) {
-                propName = component;
-              }
-              if (n % 2) {
-                _results1.push(proppers[propName] = ~~component);
-              } else {
-                _results1.push(void 0);
-              }
+          for (n = _i = 0, _len = components.length; _i < _len; n = ++_i) {
+            component = components[n];
+            if (!(n % 2)) {
+              propName = component;
             }
-            return _results1;
-          })());
+            if (n % 2) {
+              proppers[propName] = ~~component;
+              result += propName + component;
+            }
+          }
+          _results.push(this.style[prop] = result + propName);
         } else {
-          _results.push(this.lastPosition[prop] = value);
+          _results.push(this.lastPosition[prop] = this.style[prop] = value);
         }
       }
       return _results;
